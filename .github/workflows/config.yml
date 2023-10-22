@@ -1,0 +1,29 @@
+name: CI untuk karsajobs  # Nama deskriptif untuk alur kerja CI Anda
+
+on:
+  push:
+    branches:
+      - karsajobs  # Memicu alur kerja hanya pada saat melakukan push ke cabang 'karsajobs'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Gunakan runner Ubuntu terbaru untuk pekerjaan ini
+
+    steps:
+      - name: Periksa Repository  # Periksa repositori Git
+        uses: actions/checkout@v2
+
+      - name: Instal dan Jalankan Hadolint  # Instal dan jalankan Hadolint untuk melintasi Dockerfile
+        run: |
+          wget -O hadolint https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64
+          chmod +x hadolint
+          ./hadolint Dockerfile
+
+      - name: Jalankan Unit Tests  # Jalankan unit tests untuk kode
+        run: go test -v -short --count=1 $(go list ./...)
+
+      - name: Bangun dan Unggah Docker Image  # Bangun dan unggah Docker image
+        run: |
+          export GH_PACKAGES_TOKEN=${{ secrets.GH_PACKAGES_TOKEN }}
+          bash build_push_image_karsajobs.sh
+
